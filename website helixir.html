@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Helixir — Transforming Clinics Into Patient Magnets</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0D3D71;--ndp:#061e3a;--nmid:#1a5599;
+  --gold:#D98715;--gl:#f0a832;--gp:#fef3e0;
+  --white:#fff;--off:#f7fafd;--slate:#5a6a82;
+  --lb:#eef5ff;--br:rgba(13,61,113,.1);
+  --sh:0 24px 70px rgba(13,61,113,.13);--shs:0 6px 24px rgba(13,61,113,.09);
+  --cx:50%;--cy:50%;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:#fff;color:#1a2740;overflow-x:hidden;cursor:none;}
+h1,h2,h3,h4,h5,h6{font-family:'Manrope',sans-serif;}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:#f0f6ff;}::-webkit-scrollbar-thumb{background:var(--navy);border-radius:3px;}
+
+/* spotlight */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9990;background:radial-gradient(700px circle at var(--cx) var(--cy),rgba(217,135,21,.055),transparent 55%);}
+
+/* cursor */
+#cur{position:fixed;width:10px;height:10px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .3s,height .3s,background .3s;}
+#crng{position:fixed;width:38px;height:38px;border:1.5px solid rgba(217,135,21,.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .4s,height .4s;}
+#cur.h{width:18px;height:18px;background:var(--navy);}#crng.h{width:54px;height:54px;border-color:rgba(13,61,113,.4);}
+
+/* keyframes */
+@keyframes fadeUp{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scIn{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes orb{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.9;transform:scale(1.08)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+@keyframes grad{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes shim{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+@keyframes spinA{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes spinB{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(-360deg)}}
+@keyframes lineGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* reveal */
+[data-r]{opacity:0;transform:translateY(36px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1);}
+[data-r].on{opacity:1;transform:translateY(0);}
+[data-r][data-d="1"]{transition-delay:.1s;}[data-r][data-d="2"]{transition-delay:.22s;}
+[data-r][data-d="3"]{transition-delay:.34s;}[data-r][data-d="4"]{transition-delay:.46s;}
+[data-r][data-d="5"]{transition-delay:.58s;}
+
+/* shared layout */
+.sec{padding:110px 0;}
+.wrap{max-width:1220px;margin:0 auto;padding:0 60px;}
+.lbl{display:inline-flex;align-items:center;gap:8px;color:var(--gold);font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;}
+.lbl::before{content:'';display:block;width:18px;height:2px;background:var(--gold);border-radius:2px;}
+.ttl{font-size:clamp(28px,3.8vw,48px);font-weight:800;line-height:1.15;color:var(--ndp);margin-bottom:16px;}
+.ttl .a{color:var(--gold);}
+.sub{font-size:15.5px;line-height:1.78;color:var(--slate);max-width:580px;}
+
+/* ═══════════════════════════════════
+   NAV
+═══════════════════════════════════ */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:20px 60px;display:flex;align-items:center;justify-content:space-between;transition:background .4s,box-shadow .4s,padding .4s;}
+nav.sc{background:rgba(255,255,255,.96);backdrop-filter:blur(20px);box-shadow:0 2px 24px rgba(13,61,113,.09);padding:13px 60px;}
+.nlogo{height:32px;filter:brightness(0) invert(1);transition:filter .4s;}
+nav.sc .nlogo{filter:none;}
+.nlinks{display:flex;gap:36px;align-items:center;list-style:none;}
+.nlinks a{color:rgba(255,255,255,.85);text-decoration:none;font-size:13.5px;font-weight:500;transition:color .3s;}
+nav.sc .nlinks a{color:var(--navy);}
+.nlinks a:hover{color:var(--gold);}
+.ncta{background:var(--gold)!important;color:#fff!important;padding:10px 24px;border-radius:100px;font-weight:700!important;box-shadow:0 6px 20px rgba(217,135,21,.35);transition:transform .25s,box-shadow .25s!important;}
+.ncta:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(217,135,21,.5)!important;}
+
+/* ═══════════════════════════════════
+   HERO
+═══════════════════════════════════ */
+.hero{min-height:100vh;position:relative;overflow:hidden;display:flex;align-items:center;}
+.hbg{position:absolute;inset:0;background:linear-gradient(135deg,#03111f 0%,#061e3a 42%,#0d3d71 100%);}
+.hmesh{position:absolute;inset:0;background:radial-gradient(ellipse at 10% 50%,rgba(26,85,153,.55) 0%,transparent 55%),radial-gradient(ellipse at 90% 15%,rgba(217,135,21,.13) 0%,transparent 48%),radial-gradient(ellipse at 65% 85%,rgba(13,61,113,.4) 0%,transparent 50%);}
+.hgrid{position:absolute;inset:0;opacity:.033;background-image:linear-gradient(rgba(255,255,255,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.8) 1px,transparent 1px);background-size:72px 72px;}
+.hblob{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;}
+.hb1{width:700px;height:700px;right:-130px;top:-180px;background:radial-gradient(circle,rgba(217,135,21,.12) 0%,transparent 68%);animation:orb 10s ease-in-out infinite;}
+.hb2{width:450px;height:450px;left:-60px;bottom:-80px;background:radial-gradient(circle,rgba(26,85,153,.3) 0%,transparent 68%);animation:orb 14s ease-in-out infinite reverse;}
+#pc{position:absolute;inset:0;z-index:1;pointer-events:none;}
+
+.hin{position:relative;z-index:3;max-width:1220px;margin:0 auto;padding:130px 60px 80px;display:grid;grid-template-columns:1.1fr .9fr;gap:70px;align-items:center;}
+
+/* hero left */
+.hbadge{display:inline-flex;align-items:center;gap:9px;background:rgba(217,135,21,.14);border:1px solid rgba(217,135,21,.32);color:var(--gl);padding:8px 18px;border-radius:100px;font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;margin-bottom:26px;animation:fadeUp .9s ease .1s both;}
+.bdot{width:7px;height:7px;background:var(--gold);border-radius:50%;animation:pulse 2s ease infinite;}
+.htitle{font-size:clamp(38px,4.8vw,64px);font-weight:900;line-height:1.1;color:#fff;margin-bottom:20px;animation:fadeUp .9s ease .2s both;}
+.htitle .gw{background:linear-gradient(90deg,#D98715,#f0a832,#D98715);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:grad 3s ease infinite;}
+.hsub{font-size:16.5px;line-height:1.76;color:rgba(255,255,255,.72);margin-bottom:36px;animation:fadeUp .9s ease .35s both;}
+.hbtns{display:flex;gap:13px;flex-wrap:wrap;animation:fadeUp .9s ease .5s both;}
+.btng{background:var(--gold);color:#fff;padding:14px 28px;border-radius:100px;text-decoration:none;cursor:none;font-family:'Manrope',sans-serif;font-size:13.5px;font-weight:800;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 26px rgba(217,135,21,.38);transition:transform .25s,box-shadow .25s;position:relative;overflow:hidden;}
+.btng::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);animation:shim 2.5s ease infinite;}
+.btng:hover{transform:translateY(-3px);box-shadow:0 14px 38px rgba(217,135,21,.55);}
+.btno{background:transparent;color:rgba(255,255,255,.88);padding:14px 28px;border-radius:100px;text-decoration:none;cursor:none;font-family:'Manrope',sans-serif;font-size:13.5px;font-weight:700;border:1.5px solid rgba(255,255,255,.28);display:inline-flex;align-items:center;gap:8px;transition:background .25s,border-color .3s;}
+.btno:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.6);}
+.htrust{display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin-top:38px;padding-top:32px;border-top:1px solid rgba(255,255,255,.1);animation:fadeUp .9s ease .65s both;}
+.tc{display:flex;align-items:center;gap:7px;color:rgba(255,255,255,.55);font-size:12.5px;font-weight:500;}
+.tci{color:var(--gold);}
+
+/* hero right */
+.hr{position:relative;animation:scIn 1.1s cubic-bezier(.16,1,.3,1) .3s both;}
+.hrng{position:absolute;border-radius:50%;top:50%;left:50%;}
+.hrng1{width:430px;height:430px;border:2px dashed rgba(217,135,21,.22);animation:spinA 28s linear infinite;}
+.hrng2{width:570px;height:570px;border:1.5px dashed rgba(255,255,255,.07);animation:spinB 40s linear infinite;}
+.himg{position:relative;border-radius:28px;overflow:hidden;aspect-ratio:4/5;max-height:540px;box-shadow:0 30px 90px rgba(0,0,0,.5);}
+.himg img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;filter:brightness(.88) saturate(1.1);transition:transform 8s ease;}
+.himg:hover img{transform:scale(1.04);}
+.himgo{position:absolute;inset:0;background:linear-gradient(to top,rgba(3,17,31,.7) 0%,rgba(3,17,31,.08) 50%,transparent 100%);}
+.hfc{position:absolute;background:rgba(255,255,255,.12);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.2);border-radius:16px;padding:14px 20px;}
+.hfc1{top:28px;left:-44px;animation:floatY 7s ease-in-out infinite;}
+.hfc2{bottom:80px;right:-44px;animation:floatY 7s ease-in-out infinite;animation-delay:-3.5s;}
+.hfn{font-size:26px;font-weight:900;color:var(--gold);}
+.hfl{font-size:11px;color:rgba(255,255,255,.65);font-weight:600;letter-spacing:.04em;white-space:nowrap;}
+
+.spill{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;color:rgba(255,255,255,.38);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;animation:fadeUp 1s ease 1.2s both;}
+.sline{width:1px;height:46px;background:linear-gradient(to bottom,rgba(255,255,255,.35),transparent);animation:floatY 2s ease-in-out infinite;}
+
+/* ═══════════════════════════════════
+   STATS BAR
+═══════════════════════════════════ */
+.sbar{background:var(--gold);padding:24px 0;position:relative;overflow:hidden;}
+.sbar::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.09),transparent);animation:shim 4s ease infinite;}
+.srow{max-width:1220px;margin:0 auto;padding:0 60px;display:flex;justify-content:space-between;align-items:center;}
+.si{text-align:center;color:#fff;}
+.sin{font-size:32px;font-weight:900;line-height:1;}
+.sil{font-size:11.5px;font-weight:600;opacity:.85;margin-top:3px;letter-spacing:.04em;}
+.sd{width:1px;height:44px;background:rgba(255,255,255,.3);}
+
+/* ═══════════════════════════════════
+   PROBLEM SECTION  (new layout)
+═══════════════════════════════════ */
+.prob{background:var(--ndp);position:relative;overflow:hidden;}
+.prob::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(217,135,21,.3),transparent);}
+.pblob{position:absolute;border-radius:50%;filter:blur(100px);pointer-events:none;}
+.pb1{width:600px;height:600px;top:-150px;right:-100px;background:rgba(217,135,21,.07);}
+.pb2{width:500px;height:500px;bottom:-100px;left:-60px;background:rgba(13,61,113,.38);}
+
+/* top 2-col statement */
+.p-top{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:end;margin-bottom:64px;}
+.p-hl{font-size:clamp(32px,4.2vw,52px);font-weight:900;color:#fff;line-height:1.12;}
+.p-hl .a{color:var(--gold);}
+.p-lead{font-size:15.5px;line-height:1.82;color:rgba(255,255,255,.58);max-width:480px;}
+.p-lead strong{color:rgba(255,255,255,.86);font-weight:600;}
+
+/* search-reality table */
+.p-strip{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:hidden;margin-bottom:52px;}
+.ps-item{padding:24px 26px;border-right:1px solid rgba(255,255,255,.08);display:flex;align-items:flex-start;gap:14px;transition:background .3s;}
+.ps-item:last-child{border-right:none;}
+.ps-item:hover{background:rgba(255,255,255,.04);}
+.ps-ico{width:40px;height:40px;border-radius:10px;background:rgba(217,135,21,.12);border:1px solid rgba(217,135,21,.22);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;margin-top:2px;}
+.ps-q{font-size:13px;font-weight:600;color:rgba(255,255,255,.75);margin-bottom:5px;font-style:italic;}
+.ps-r{font-size:12px;color:rgba(255,255,255,.35);font-weight:500;line-height:1.5;}
+.ps-r span{color:var(--gl);font-weight:700;}
+
+/* consequence cards */
+.p-cons{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+.pc{border-left:3px solid rgba(217,135,21,.35);padding:26px 26px 26px 22px;background:rgba(255,255,255,.03);border-radius:0 14px 14px 0;transition:border-color .3s,background .3s;}
+.pc:hover{border-color:var(--gold);background:rgba(255,255,255,.06);}
+.pc-n{font-size:40px;font-weight:900;color:var(--gold);line-height:1;margin-bottom:10px;}
+.pc h4{font-size:14.5px;font-weight:800;color:#fff;margin-bottom:7px;}
+.pc p{font-size:13px;color:rgba(255,255,255,.5);line-height:1.7;}
+
+/* ═══════════════════════════════════
+   SOLUTION
+═══════════════════════════════════ */
+.sol{background:var(--off);}
+.sol-lay{display:grid;grid-template-columns:1fr 1fr;gap:76px;align-items:center;margin-top:52px;}
+.chks{display:flex;flex-direction:column;gap:14px;}
+.chk{display:flex;align-items:flex-start;gap:16px;background:#fff;border:1px solid var(--br);border-radius:14px;padding:18px 20px;transition:transform .28s,box-shadow .28s,border-color .28s;}
+.chk:hover{transform:translateX(6px);box-shadow:var(--shs);border-color:rgba(217,135,21,.3);}
+.ck{width:28px;height:28px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:900;flex-shrink:0;margin-top:2px;}
+.chk h4{font-size:14.5px;font-weight:800;color:var(--navy);margin-bottom:3px;}
+.chk p{font-size:13px;color:var(--slate);line-height:1.6;}
+
+/* sol right — doctor image with metrics */
+.solv{position:relative;border-radius:26px;overflow:hidden;}
+.solv img{width:100%;height:480px;object-fit:cover;object-position:center top;display:block;}
+.solvo{position:absolute;inset:0;background:linear-gradient(to top,rgba(6,30,58,.88) 0%,rgba(6,30,58,.25) 55%,transparent 100%);}
+.solm{position:absolute;bottom:28px;left:24px;right:24px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.sm{text-align:center;background:rgba(255,255,255,.12);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:14px 8px;}
+.smn{font-size:24px;font-weight:900;color:var(--gold);}
+.sml{font-size:10.5px;color:rgba(255,255,255,.65);font-weight:600;letter-spacing:.03em;margin-top:3px;}
+
+/* ═══════════════════════════════════
+   SERVICES
+═══════════════════════════════════ */
+.svcs{background:#fff;}
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:52px;}
+.sc{border:1px solid var(--br);border-radius:22px;padding:32px 26px;cursor:none;position:relative;overflow:hidden;transition:transform .32s,box-shadow .32s,border-color .32s;}
+.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--navy),var(--gold));transform:scaleX(0);transform-origin:left;transition:transform .4s;}
+.sc:hover::after{transform:scaleX(1);}
+.sc:hover{transform:translateY(-7px);box-shadow:var(--sh);border-color:transparent;}
+.sic{width:54px;height:54px;border-radius:16px;background:var(--lb);display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:20px;transition:background .3s,transform .3s;animation:floatY 6s ease-in-out infinite;}
+.sc:hover .sic{background:var(--gp);transform:scale(1.1);}
+.sc h3{font-size:17px;font-weight:800;color:var(--navy);margin-bottom:9px;}
+.sc p{font-size:13px;line-height:1.73;color:var(--slate);margin-bottom:16px;}
+.soc{display:inline-flex;align-items:center;gap:5px;color:var(--gold);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+
+/* ═══════════════════════════════════
+   DIFFERENTIATORS
+═══════════════════════════════════ */
+.diff{background:var(--lb);}
+.dl{display:grid;grid-template-columns:1.1fr .9fr;gap:76px;align-items:center;margin-top:52px;}
+.dlist{display:flex;flex-direction:column;gap:26px;}
+.di{display:flex;gap:18px;}
+.dn{font-size:42px;font-weight:900;color:rgba(13,61,113,.1);line-height:1;flex-shrink:0;width:50px;}
+.di h4{font-size:15.5px;font-weight:800;color:var(--navy);margin-bottom:5px;}
+.di p{font-size:13px;color:var(--slate);line-height:1.7;}
+.dcta{background:var(--navy);border-radius:26px;padding:50px 42px;text-align:center;position:relative;overflow:hidden;}
+.dcta::before{content:'';position:absolute;top:-40%;right:-25%;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(217,135,21,.18) 0%,transparent 65%);animation:orb 7s ease-in-out infinite;}
+.dcta h3{font-size:27px;font-weight:900;color:#fff;margin-bottom:13px;position:relative;}
+.dcta p{color:rgba(255,255,255,.6);margin-bottom:28px;line-height:1.72;position:relative;font-size:13.5px;}
+
+/* ═══════════════════════════════════
+   SPECIALTIES
+═══════════════════════════════════ */
+.spcs{background:#fff;}
+.spg{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:52px;}
+.spc{text-align:center;padding:28px 16px;border:1px solid var(--br);border-radius:18px;cursor:none;transition:transform .3s,box-shadow .3s,border-color .3s,background .3s;}
+.spc:hover{transform:translateY(-5px);box-shadow:var(--shs);border-color:var(--gold);background:var(--gp);}
+.se{font-size:32px;margin-bottom:11px;display:block;transition:transform .3s;}
+.spc:hover .se{transform:scale(1.2) rotate(-5deg);}
+.spc h4{font-size:13.5px;font-weight:700;color:var(--navy);}
+
+/* ═══════════════════════════════════
+   HOW IT WORKS
+═══════════════════════════════════ */
+.how{background:var(--off);}
+.stps{display:grid;grid-template-columns:repeat(3,1fr);margin-top:64px;position:relative;}
+.stps-line{position:absolute;top:54px;left:18%;right:18%;height:2px;background:linear-gradient(90deg,var(--navy),var(--gold),var(--navy));z-index:0;transform-origin:left;animation:lineGrow 1.2s ease .5s both;}
+.stp{text-align:center;padding:0 26px;position:relative;z-index:1;}
+.stpc{width:78px;height:78px;border-radius:50%;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:900;border:3px solid #fff;box-shadow:0 0 0 4px var(--navy),0 10px 34px rgba(13,61,113,.28);transition:transform .3s,box-shadow .3s;}
+.stp:hover .stpc{transform:scale(1.1);box-shadow:0 0 0 4px var(--gold),0 16px 42px rgba(217,135,21,.35);}
+.sc1{background:var(--navy);color:var(--gold);}
+.sc2{background:var(--gold);color:#fff;}
+.sc3{background:var(--ndp);color:var(--gold);}
+.stp h3{font-size:19px;font-weight:800;color:var(--navy);margin-bottom:9px;}
+.stp p{font-size:13px;color:var(--slate);line-height:1.74;}
+
+/* ═══════════════════════════════════
+   RESULTS
+═══════════════════════════════════ */
+.res{background:var(--ndp);}
+.res .ttl{color:#fff;}.res .sub{color:rgba(255,255,255,.6);}
+.rg{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:52px;}
+.rc{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:34px 26px;transition:transform .32s,border-color .32s;cursor:none;}
+.rc:hover{transform:translateY(-6px);border-color:rgba(217,135,21,.42);}
+.rb{display:inline-flex;align-items:center;gap:6px;background:rgba(217,135,21,.14);border:1px solid rgba(217,135,21,.3);color:var(--gl);padding:5px 13px;border-radius:100px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px;}
+.rn{font-size:52px;font-weight:900;color:var(--gold);line-height:1;margin-bottom:7px;}
+.rc h3{font-size:15.5px;font-weight:800;color:#fff;margin-bottom:9px;}
+.rc p{font-size:13px;color:rgba(255,255,255,.52);line-height:1.65;}
+.rt{display:inline-flex;align-items:center;gap:5px;color:rgba(255,255,255,.33);font-size:12px;margin-top:14px;}
+
+/* ═══════════════════════════════════
+   TESTIMONIALS
+═══════════════════════════════════ */
+.tst{background:#fff;}
+.tg{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:52px;}
+.tc2{border:1px solid var(--br);border-radius:22px;padding:32px 26px;cursor:none;transition:transform .32s,box-shadow .32s;}
+.tc2:hover{transform:translateY(-5px);box-shadow:var(--sh);}
+.qg{font-size:64px;font-weight:900;color:var(--gold);line-height:.4;margin-bottom:20px;display:block;}
+.ts{color:var(--gold);font-size:14px;margin-bottom:16px;letter-spacing:2px;}
+.tt{font-size:14px;line-height:1.76;color:#2d3748;margin-bottom:24px;font-style:italic;}
+.tau{display:flex;align-items:center;gap:13px;}
+.tav{width:50px;height:50px;border-radius:50%;overflow:hidden;flex-shrink:0;box-shadow:0 4px 14px rgba(13,61,113,.22);}
+.tav img{width:100%;height:100%;object-fit:cover;object-position:top;}
+.tn{font-weight:800;color:var(--navy);font-size:13.5px;}
+.tr{font-size:12px;color:var(--slate);margin-top:2px;}
+
+/* ═══════════════════════════════════
+   PRICING
+═══════════════════════════════════ */
+.pri{background:var(--lb);}
+.pg{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:52px;align-items:start;}
+.prc{background:#fff;border-radius:26px;padding:40px 32px;border:1px solid var(--br);position:relative;overflow:hidden;transition:transform .32s,box-shadow .32s;}
+.prc:hover{transform:translateY(-6px);box-shadow:var(--sh);}
+.prc.pop{background:var(--navy);border-color:var(--navy);transform:scale(1.04);}
+.prc.pop:hover{transform:scale(1.04) translateY(-6px);}
+.pbdg{position:absolute;top:20px;right:20px;background:var(--gold);color:#fff;padding:5px 13px;border-radius:100px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;}
+.pt{font-size:21px;font-weight:800;color:var(--navy);margin-bottom:4px;}
+.prc.pop .pt{color:#fff;}
+.pd{font-size:12.5px;color:var(--slate);margin-bottom:24px;}
+.prc.pop .pd{color:rgba(255,255,255,.5);}
+.pa{font-size:32px;font-weight:900;color:var(--gold);}
+.pp{font-size:12.5px;color:var(--slate);margin-bottom:26px;}
+.prc.pop .pp{color:rgba(255,255,255,.42);}
+.po{padding:13px 16px;border-radius:11px;background:var(--lb);font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:24px;}
+.prc.pop .po{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);}
+.pf{list-style:none;margin-bottom:28px;display:flex;flex-direction:column;gap:10px;}
+.pf li{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:#374151;}
+.prc.pop .pf li{color:rgba(255,255,255,.78);}
+.pf li::before{content:'✓';color:var(--gold);font-weight:900;flex-shrink:0;margin-top:1px;}
+.btnp{display:block;text-align:center;padding:13px;border-radius:100px;font-family:'Manrope',sans-serif;font-size:13.5px;font-weight:800;text-decoration:none;cursor:none;transition:transform .22s,box-shadow .22s,background .22s;}
+.bp-ol{border:2px solid var(--navy);color:var(--navy);background:transparent;}
+.bp-ol:hover{background:var(--navy);color:#fff;}
+.bp-fl{background:var(--gold);color:#fff;border:none;box-shadow:0 5px 20px rgba(217,135,21,.35);}
+.bp-fl:hover{box-shadow:0 10px 30px rgba(217,135,21,.5);transform:translateY(-2px);}
+
+/* ═══════════════════════════════════
+   VISION / MISSION
+═══════════════════════════════════ */
+.vm{background:#fff;}
+.vmg{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:52px;}
+.vmc{padding:46px 40px;border-radius:26px;}
+.vn{background:var(--navy);}
+.vg{background:var(--gold);}
+.vml{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.42);display:block;margin-bottom:13px;}
+.vmc h3{font-size:24px;font-weight:900;color:#fff;margin-bottom:13px;}
+.vmc p{color:rgba(255,255,255,.74);line-height:1.76;font-size:14px;}
+.vml2{margin-top:13px;display:flex;flex-direction:column;gap:8px;list-style:none;}
+.vml2 li{display:flex;align-items:flex-start;gap:9px;color:rgba(255,255,255,.74);font-size:13px;}
+.vml2 li::before{content:'→';color:rgba(255,255,255,.4);flex-shrink:0;}
+
+/* ═══════════════════════════════════
+   AUDIT / LEAD MAGNET
+═══════════════════════════════════ */
+.aud{background:var(--ndp);}
+.audi{text-align:center;max-width:700px;margin:0 auto;}
+.aud .ttl{color:#fff;}
+.aud .sub{color:rgba(255,255,255,.6);margin:0 auto;text-align:center;}
+.aps{display:flex;flex-direction:column;gap:13px;margin:36px 0;text-align:left;}
+.ap{display:flex;align-items:flex-start;gap:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:13px;padding:18px 20px;transition:background .25s,border-color .25s;}
+.ap:hover{background:rgba(255,255,255,.09);border-color:rgba(217,135,21,.25);}
+.api{font-size:21px;flex-shrink:0;}
+.apb h4{font-size:14px;font-weight:800;color:#fff;margin-bottom:3px;}
+.apb p{font-size:12.5px;color:rgba(255,255,255,.48);line-height:1.55;}
+
+/* ═══════════════════════════════════
+   FAQ
+═══════════════════════════════════ */
+.faq{background:var(--off);}
+.fl{display:flex;flex-direction:column;gap:13px;margin-top:52px;max-width:800px;margin-left:auto;margin-right:auto;}
+.fi{background:#fff;border:1px solid var(--br);border-radius:14px;overflow:hidden;transition:box-shadow .3s,border-color .3s;}
+.fi.op{box-shadow:var(--shs);border-color:rgba(13,61,113,.17);}
+.fq{display:flex;justify-content:space-between;align-items:center;padding:19px 26px;cursor:none;font-size:14.5px;font-weight:700;color:var(--navy);}
+.ft{width:26px;height:26px;background:var(--lb);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--navy);font-size:17px;flex-shrink:0;transition:transform .35s,background .3s;}
+.fi.op .ft{transform:rotate(45deg);background:var(--navy);color:#fff;}
+.fa{max-height:0;overflow:hidden;transition:max-height .42s ease,padding .32s;padding:0 26px;font-size:13.5px;color:var(--slate);line-height:1.76;}
+.fi.op .fa{max-height:200px;padding:0 26px 20px;}
+
+/* ═══════════════════════════════════
+   FINAL CTA
+═══════════════════════════════════ */
+.fcta{background:linear-gradient(135deg,#03111f 0%,var(--ndp) 45%,#1a5599 100%);padding:130px 0;text-align:center;position:relative;overflow:hidden;}
+.fcta::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.033) 1.5px,transparent 1.5px);background-size:36px 36px;}
+.cb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;}
+.cb1{width:480px;height:480px;top:-150px;left:-80px;background:rgba(217,135,21,.11);animation:orb 9s ease-in-out infinite;}
+.cb2{width:400px;height:400px;bottom:-110px;right:-60px;background:rgba(26,85,153,.28);animation:orb 12s ease-in-out infinite reverse;}
+.fci{position:relative;z-index:2;max-width:700px;margin:0 auto;padding:0 60px;}
+.fci h2{font-size:clamp(32px,5vw,54px);font-weight:900;color:#fff;line-height:1.15;margin-bottom:16px;}
+.fci h2 .a{color:var(--gold);}
+.fci p{font-size:16.5px;color:rgba(255,255,255,.68);margin-bottom:44px;line-height:1.65;}
+.cbs{display:flex;gap:13px;justify-content:center;flex-wrap:wrap;}
+
+/* ═══════════════════════════════════
+   FOOTER
+═══════════════════════════════════ */
+footer{background:#020d1c;padding:64px 0 26px;}
+.fg{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:52px;margin-bottom:52px;}
+.flogo{height:28px;filter:brightness(0) invert(1);margin-bottom:16px;display:block;}
+.fdesc{font-size:13px;color:rgba(255,255,255,.36);line-height:1.76;max-width:265px;}
+.fc h4{font-size:12.5px;font-weight:800;color:rgba(255,255,255,.58);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;}
+.fl2{list-style:none;display:flex;flex-direction:column;gap:9px;}
+.fl2 a{color:rgba(255,255,255,.36);text-decoration:none;font-size:13px;transition:color .22s;}
+.fl2 a:hover{color:var(--gold);}
+.fb{border-top:1px solid rgba(255,255,255,.07);padding-top:26px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:rgba(255,255,255,.26);}
+.fb a{color:var(--gold);text-decoration:none;}
+
+/* ═══════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════ */
+@media(max-width:960px){
+  nav{padding:13px 22px;}nav.sc{padding:10px 22px;}.nlinks{display:none;}
+  .wrap,.srow,.fci,.fg{padding:0 22px;}
+  .hin{grid-template-columns:1fr;padding:108px 22px 56px;gap:44px;}
+  .hr{display:none;}
+  .p-top,.p-strip,.p-cons,.sg,.rg,.tg,.pg,.vmg,.dl{grid-template-columns:1fr;}
+  .ps-item{border-right:none;border-bottom:1px solid rgba(255,255,255,.08);}
+  .ps-item:last-child{border-bottom:none;}
+  .sol-lay{grid-template-columns:1fr;gap:36px;}
+  .stps{grid-template-columns:1fr;gap:38px;}.stps-line{display:none;}
+  .spg{grid-template-columns:repeat(2,1fr);}
+  .fg{grid-template-columns:1fr 1fr;gap:32px;}
+  .prc.pop{transform:none;}
+  .sec{padding:66px 0;}
+  .hfc{display:none;}
+  .p-top{gap:28px;margin-bottom:36px;}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+
+/* ═══════════════════════════════════
+   MODAL FORM
+═══════════════════════════════════ */
+.modal-backdrop{position:fixed;inset:0;z-index:10000;background:rgba(3,17,31,.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .35s ease;}
+.modal-backdrop.open{opacity:1;pointer-events:all;}
+.modal{background:#fff;border-radius:28px;padding:48px 44px;width:100%;max-width:500px;position:relative;transform:translateY(30px) scale(.96);transition:transform .4s cubic-bezier(.16,1,.3,1),opacity .4s ease;opacity:0;box-shadow:0 40px 100px rgba(0,0,0,.3);}
+.modal-backdrop.open .modal{transform:translateY(0) scale(1);opacity:1;}
+.modal-close{position:absolute;top:18px;right:20px;width:32px;height:32px;background:var(--lb);border:none;border-radius:50%;font-size:18px;cursor:none;display:flex;align-items:center;justify-content:center;color:var(--slate);transition:background .2s,color .2s;}
+.modal-close:hover{background:var(--navy);color:#fff;}
+.modal-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(217,135,21,.1);border:1px solid rgba(217,135,21,.25);color:var(--gold);padding:6px 14px;border-radius:100px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;}
+.modal h3{font-size:24px;font-weight:900;color:var(--ndp);margin-bottom:6px;}
+.modal p{font-size:13.5px;color:var(--slate);margin-bottom:28px;line-height:1.6;}
+.mform{display:flex;flex-direction:column;gap:14px;}
+.mfield{display:flex;flex-direction:column;gap:6px;}
+.mfield label{font-size:12.5px;font-weight:700;color:var(--navy);letter-spacing:.02em;}
+.mfield label span{color:var(--slate);font-weight:400;}
+.mfield input{padding:13px 16px;border:1.5px solid var(--br);border-radius:12px;font-size:14px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#1a2740;background:#fff;transition:border-color .25s,box-shadow .25s;outline:none;cursor:text;}
+.mfield input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(217,135,21,.12);}
+.mfield input::placeholder{color:#b0bec5;}
+.msubmit{background:var(--gold);color:#fff;border:none;padding:15px;border-radius:100px;font-family:'Manrope',sans-serif;font-size:14.5px;font-weight:800;cursor:none;margin-top:6px;transition:transform .25s,box-shadow .25s;position:relative;overflow:hidden;box-shadow:0 8px 24px rgba(217,135,21,.35);}
+.msubmit::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);animation:shim 2.5s ease infinite;}
+.msubmit:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(217,135,21,.5);}
+.mfooter{text-align:center;margin-top:12px;font-size:12px;color:var(--slate);}
+/* success state */
+.modal-success{display:none;text-align:center;padding:20px 0;}
+.modal-success.show{display:block;}
+.mform.hide{display:none;}
+.success-icon{font-size:56px;margin-bottom:16px;}
+.modal-success h4{font-size:22px;font-weight:900;color:var(--ndp);margin-bottom:8px;}
+.modal-success p{font-size:14px;color:var(--slate);line-height:1.65;}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="crng"></div>
+
+<!-- ══════════ NAV ══════════ -->
+<nav id="nav">
+  <img src="/mnt/user-data/uploads/Group_2147232051.svg" alt="Helixir" class="nlogo">
+  <ul class="nlinks">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#audit" class="ncta">Book Free Audit</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════ HERO ══════════ -->
+<section class="hero">
+  <canvas id="pc"></canvas>
+  <div class="hbg"></div><div class="hmesh"></div><div class="hgrid"></div>
+  <div class="hblob hb1"></div><div class="hblob hb2"></div>
+  <div class="hin">
+    <div>
+      <div class="hbadge"><span class="bdot"></span>Healthcare Digital Growth Partner</div>
+      <h1 class="htitle">Turn Your Clinic Into a<br><span class="gw">Patient Magnet</span></h1>
+      <p class="hsub">Helixir helps doctors dominate local search, attract high-intent patients, and build a powerful online medical brand — driving real appointments, not just traffic.</p>
+      <div class="hbtns">
+        <a href="#audit" class="btng">🚀 Book Free Clinic Growth Audit</a>
+        <a href="#results" class="btno">See Results →</a>
+      </div>
+      <div class="htrust">
+        <div class="tc"><span class="tci">✅</span>500+ Clinics Served</div>
+        <div class="tc"><span class="tci">✅</span>Healthcare-Only Agency</div>
+        <div class="tc"><span class="tci">✅</span>Guaranteed Growth</div>
+      </div>
+    </div>
+    <div class="hr">
+      <div class="hrng hrng2"></div><div class="hrng hrng1"></div>
+      <div class="himg">
+        <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&q=85&fit=crop" alt="Doctor">
+        <div class="himgo"></div>
+      </div>
+      <div class="hfc hfc1"><div class="hfn">4×</div><div class="hfl">Avg. Patient Growth</div></div>
+      <div class="hfc hfc2"><div class="hfn">#1</div><div class="hfl">Google Rankings</div></div>
+    </div>
+  </div>
+  <div class="spill"><div class="sline"></div><span>Scroll</span></div>
+</section>
+
+<!-- ══════════ STATS BAR ══════════ -->
+<div class="sbar">
+  <div class="srow">
+    <div class="si"><div class="sin cnt" data-t="500">0+</div><div class="sil">Clinics Served</div></div>
+    <div class="sd"></div>
+    <div class="si"><div class="sin cnt" data-t="12">0+</div><div class="sil">Cities Active</div></div>
+    <div class="sd"></div>
+    <div class="si"><div class="sin">4×</div><div class="sil">Avg. Patient Growth</div></div>
+    <div class="sd"></div>
+    <div class="si"><div class="sin">98%</div><div class="sil">Client Retention</div></div>
+    <div class="sd"></div>
+    <div class="si"><div class="sin">₹0</div><div class="sil">Free Clinic Audit</div></div>
+  </div>
+</div>
+
+<!-- ══════════ PROBLEM ══════════ -->
+<section class="prob sec" style="padding:90px 0;">
+  <div class="pblob pb1"></div><div class="pblob pb2"></div>
+  <div class="wrap" style="position:relative;z-index:2">
+    <div class="p-top" data-r>
+      <div>
+        <span class="lbl" style="color:var(--gl)">The Uncomfortable Truth</span>
+        <h2 class="p-hl">Your best patients are<br>finding someone else <span class="a">right now.</span></h2>
+      </div>
+      <div>
+        <p class="p-lead">Every day, hundreds of patients in your city open Google and type in your specialty. They pick from the top three results they see. <strong>If your clinic isn't there, you simply don't exist to them.</strong> It has nothing to do with your clinical skill — and everything to do with your online presence.</p>
+      </div>
+    </div>
+    <div class="p-strip" data-r data-d="2">
+      <div class="ps-item">
+        <div class="ps-ico">🔍</div>
+        <div>
+          <div class="ps-q">"Best dermatologist near me"</div>
+          <div class="ps-r">Your competitor ranks <span>#1</span> — you're on page 3</div>
+        </div>
+      </div>
+      <div class="ps-item">
+        <div class="ps-ico">📍</div>
+        <div>
+          <div class="ps-q">"Dentist in [your city]"</div>
+          <div class="ps-r">Google Maps shows <span>3 rivals</span> — not your clinic</div>
+        </div>
+      </div>
+      <div class="ps-item">
+        <div class="ps-ico">📱</div>
+        <div>
+          <div class="ps-q">"IVF clinic near me"</div>
+          <div class="ps-r">Patient picks a clinic with <span>200+ reviews</span> — yours has 4</div>
+        </div>
+      </div>
+    </div>
+    <div class="p-cons">
+      <div class="pc" data-r data-d="1">
+        <div class="pc-n">73%</div>
+        <h4>Patients Never Scroll Past Page One</h4>
+        <p>If you're not in the top 3 results, the vast majority of patients in your city will never know your clinic exists — no matter how good your care is.</p>
+      </div>
+      <div class="pc" data-r data-d="2">
+        <div class="pc-n">6–12</div>
+        <h4>Patients Lost to Competitors Every Day</h4>
+        <p>That's the average number of appointment-ready patients a mid-sized clinic loses daily due to poor visibility. Over a year, it's thousands of missed consultations.</p>
+      </div>
+      <div class="pc" data-r data-d="3">
+        <div class="pc-n">4×</div>
+        <h4>More Trust for Doctors with Strong Digital Presence</h4>
+        <p>Patients equate a professional website and strong reviews with clinical credibility. A weak online presence signals doubt — before a single consultation.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ SOLUTION ══════════ -->
+<section class="sol sec" id="services">
+  <div class="wrap">
+    <div data-r>
+      <span class="lbl">The Helixir System</span>
+      <h2 class="ttl">The <span class="a">Patient Acquisition System</span><br>Built for Doctors</h2>
+      <p class="sub">We don't sell marketing services. We build complete patient acquisition systems that turn your digital presence into a 24/7 patient-booking engine.</p>
+    </div>
+    <div class="sol-lay">
+      <div class="chks">
+        <div class="chk" data-r data-d="1"><div class="ck">✓</div><div><h4>Professional Medical Website</h4><p>High-converting websites that turn visitors into booked appointments — with trust signals at every scroll.</p></div></div>
+        <div class="chk" data-r data-d="2"><div class="ck">✓</div><div><h4>Strong Clinic Branding & Identity</h4><p>A premium visual identity that communicates expertise before patients read a single word.</p></div></div>
+        <div class="chk" data-r data-d="3"><div class="ck">✓</div><div><h4>Google SEO — Rank for Your Specialty</h4><p>Dominate search results when patients look for your specialty in your city.</p></div></div>
+        <div class="chk" data-r data-d="4"><div class="ck">✓</div><div><h4>Social Media That Builds Trust</h4><p>Content that positions you as the go-to expert before patients even visit.</p></div></div>
+        <div class="chk" data-r data-d="5"><div class="ck">✓</div><div><h4>Meta Ads That Bring Real Patients</h4><p>Precision-targeted campaigns reaching patients actively searching for your specialty.</p></div></div>
+      </div>
+      <div class="solv" data-r data-d="3">
+        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=700&q=85&fit=crop" alt="Doctor consulting patient" loading="lazy">
+        <div class="solvo"></div>
+        <div class="solm">
+          <div class="sm"><div class="smn">400%</div><div class="sml">Inquiry Surge</div></div>
+          <div class="sm"><div class="smn">4 Mo</div><div class="sml">To Rank #1</div></div>
+          <div class="sm"><div class="smn">200+</div><div class="sml">Leads / 90d</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ SERVICES ══════════ -->
+<section class="svcs sec">
+  <div class="wrap">
+    <div data-r>
+      <span class="lbl">What We Do</span>
+      <h2 class="ttl">Every Service Built to<br><span class="a">Grow Your Patient Base</span></h2>
+    </div>
+    <div class="sg">
+      <div class="sc" data-r data-d="1"><div class="sic">🌐</div><h3>Medical Website Design</h3><p>Fast, beautiful, mobile-optimized websites that convert visitors into appointments — with trust signals built in at every scroll.</p><div class="soc">📈 More booked appointments</div></div>
+      <div class="sc" data-r data-d="2"><div class="sic">💎</div><h3>Healthcare Branding</h3><p>Logo, color system, typography and messaging that communicate expertise and trustworthiness before a patient speaks to you.</p><div class="soc">📈 Premium positioning</div></div>
+      <div class="sc" data-r data-d="3"><div class="sic">🔍</div><h3>SEO for Doctors</h3><p>Rank at the top of Google for the exact keywords your ideal patients search. Medical SEO requires specialized knowledge.</p><div class="soc">📈 Organic discovery 24/7</div></div>
+      <div class="sc" data-r data-d="1"><div class="sic">📍</div><h3>Local Google Maps Ranking</h3><p>When patients search "doctor near me," your clinic appears first. We engineer hyper-local Google Map dominance.</p><div class="soc">📈 Dominate local search</div></div>
+      <div class="sc" data-r data-d="2"><div class="sic">📱</div><h3>Social Media Authority</h3><p>Strategic Instagram, Facebook & YouTube content that educates patients and positions you as the leading expert.</p><div class="soc">📈 Trusted before first visit</div></div>
+      <div class="sc" data-r data-d="3"><div class="sic">🎯</div><h3>Meta Ads for Patient Leads</h3><p>Targeted campaigns reaching patients actively researching healthcare. Every rupee tracked and optimized for ROI.</p><div class="soc">📈 Predictable patient pipeline</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ DIFF ══════════ -->
+<section class="diff sec">
+  <div class="wrap">
+    <div data-r>
+      <span class="lbl">Why Helixir</span>
+      <h2 class="ttl">We Don't Sell Services.<br><span class="a">We Grow Practices.</span></h2>
+    </div>
+    <div class="dl">
+      <div class="dlist">
+        <div class="di" data-r data-d="1"><div class="dn">01</div><div><h4>Built Exclusively for Healthcare</h4><p>Every strategy, campaign, and content piece crafted with deep understanding of how healthcare decisions are made. We serve only healthcare professionals.</p></div></div>
+        <div class="di" data-r data-d="2"><div class="dn">02</div><div><h4>We Understand How Patients Choose Doctors</h4><p>Trust, proximity, and perceived expertise drive patient decisions. Our entire methodology is built around these conversion triggers — not vanity metrics.</p></div></div>
+        <div class="di" data-r data-d="3"><div class="dn">03</div><div><h4>Local SEO Domination in Your Area</h4><p>We engineer hyper-local dominance so every patient in your city searching for your specialty finds you first — consistently.</p></div></div>
+        <div class="di" data-r data-d="4"><div class="dn">04</div><div><h4>Data-Driven Growth, Not Guesswork</h4><p>Monthly reporting shows exactly how many patients found you, called, and booked — so you see real measurable ROI every month.</p></div></div>
+      </div>
+      <div class="dcta" data-r data-d="3">
+        <h3>Stop Losing Patients to Competitors</h3>
+        <p>Book your free Clinic Growth Audit and discover exactly how many patients you're missing — and what it takes to capture them.</p>
+        <a href="#audit" class="btng">Get My Free Audit →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ SPECIALTIES ══════════ -->
+<section class="spcs sec">
+  <div class="wrap">
+    <div data-r style="text-align:center">
+      <span class="lbl" style="justify-content:center">Specialties We Serve</span>
+      <h2 class="ttl" style="text-align:center">We Understand Your <span class="a">Medical Specialty</span></h2>
+      <p class="sub" style="margin:0 auto;text-align:center">Every campaign is customized for your patient journey and decision process.</p>
+    </div>
+    <div class="spg">
+      <div class="spc" data-r data-d="1"><span class="se">🦷</span><h4>Dentists & Orthodontists</h4></div>
+      <div class="spc" data-r data-d="2"><span class="se">✨</span><h4>Dermatologists</h4></div>
+      <div class="spc" data-r data-d="3"><span class="se">🦴</span><h4>Orthopedic Surgeons</h4></div>
+      <div class="spc" data-r data-d="4"><span class="se">🌸</span><h4>Gynecologists</h4></div>
+      <div class="spc" data-r data-d="1"><span class="se">👶</span><h4>Pediatricians</h4></div>
+      <div class="spc" data-r data-d="2"><span class="se">🩺</span><h4>General Physician Clinics</h4></div>
+      <div class="spc" data-r data-d="3"><span class="se">🔬</span><h4>IVF & Fertility Clinics</h4></div>
+      <div class="spc" data-r data-d="4"><span class="se">🏥</span><h4>Diagnostic Centers</h4></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ HOW IT WORKS ══════════ -->
+<section class="how sec" id="results">
+  <div class="wrap">
+    <div data-r style="text-align:center">
+      <span class="lbl" style="justify-content:center">The Process</span>
+      <h2 class="ttl" style="text-align:center">Simple 3-Step System to<br><span class="a">More Patients</span></h2>
+    </div>
+    <div class="stps">
+      <div class="stps-line"></div>
+      <div class="stp" data-r data-d="1"><div class="stpc sc1">1</div><h3>Free Clinic Growth Audit</h3><p>We analyze your entire online presence, identify every patient you're losing, and show where competitors beat you — completely free.</p></div>
+      <div class="stp" data-r data-d="3"><div class="stpc sc2">2</div><h3>Custom Patient Acquisition Strategy</h3><p>A tailored roadmap specific to your specialty, city, and patient demographics — not a template, a precision plan for your practice.</p></div>
+      <div class="stp" data-r data-d="5"><div class="stpc sc3">3</div><h3>Growth & Optimization</h3><p>We execute, monitor, and continuously optimize. Every month brings more inquiries, more appointments, and compounding authority.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ RESULTS ══════════ -->
+<section class="res sec">
+  <div class="wrap">
+    <div data-r>
+      <span class="lbl" style="color:var(--gl)">Proven Results</span>
+      <h2 class="ttl">Real Clinics. Real Growth.<br><span class="a">Real Patients.</span></h2>
+      <p class="sub">These aren't projections — they're actual results achieved for healthcare professionals who trusted Helixir.</p>
+    </div>
+    <div class="rg">
+      <div class="rc" data-r data-d="1"><div class="rb">✨ Dermatology</div><div class="rn">400%</div><h3>Surge in Patient Inquiries</h3><p>A Chennai dermatology clinic went from 20 monthly inquiries to 100+ within 6 months through targeted SEO and a rebuilt conversion website.</p><div class="rt">⏱ 6-month campaign</div></div>
+      <div class="rc" data-r data-d="2"><div class="rb">🦷 Dental</div><div class="rn">#1</div><h3>Google Ranking in 4 Months</h3><p>A multi-specialty dental clinic ranked first on Google for "dentist in [city]" within four months — generating 60+ new patient appointments monthly.</p><div class="rt">⏱ 4-month campaign</div></div>
+      <div class="rc" data-r data-d="3"><div class="rb">🦴 Orthopedic</div><div class="rn">200+</div><h3>Patient Leads in 90 Days</h3><p>An orthopedic clinic generated 200+ qualified patient leads via Meta Ads and SEO, with cost per lead 40% below target.</p><div class="rt">⏱ 90-day campaign</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ TESTIMONIALS ══════════ -->
+<section class="tst sec">
+  <div class="wrap">
+    <div data-r style="text-align:center">
+      <span class="lbl" style="justify-content:center">Testimonials</span>
+      <h2 class="ttl" style="text-align:center">What Doctors Say About <span class="a">Helixir</span></h2>
+    </div>
+    <div class="tg">
+      <div class="tc2" data-r data-d="1">
+        <span class="qg">"</span><div class="ts">★★★★★</div>
+        <p class="tt">Within three months my dermatology clinic was getting 80+ patient inquiries a month — nearly triple what we had before. Their healthcare-specific approach is genuinely different from any agency I've tried.</p>
+        <div class="tau"><div class="tav"><img src="https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=100&q=80&fit=crop&crop=face" alt="Dr. Radhika Menon" loading="lazy"></div><div><div class="tn">Dr. Radhika Menon</div><div class="tr">Senior Dermatologist, Chennai</div></div></div>
+      </div>
+      <div class="tc2" data-r data-d="2">
+        <span class="qg">"</span><div class="ts">★★★★★</div>
+        <p class="tt">Helixir showed me exactly how many patients I was losing every month. After rebuilding my website and optimizing my Google listing, I ranked #1 and my schedule has been fully booked 3 weeks ahead ever since.</p>
+        <div class="tau"><div class="tav"><img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=100&q=80&fit=crop" alt="Dr. Arjun Sharma" loading="lazy"></div><div><div class="tn">Dr. Arjun Sharma</div><div class="tr">Orthopedic Surgeon, Bangalore</div></div></div>
+      </div>
+      <div class="tc2" data-r data-d="3">
+        <span class="qg">"</span><div class="ts">★★★★★</div>
+        <p class="tt">Helixir understood the emotional sensitivity of IVF patients and crafted campaigns that built real trust. Patient inquiries doubled in four months and lead quality improved dramatically.</p>
+        <div class="tau"><div class="tav"><img src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=100&q=80&fit=crop" alt="Dr. Priya Nair" loading="lazy"></div><div><div class="tn">Dr. Priya Nair</div><div class="tr">IVF Specialist, Hyderabad</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ PRICING ══════════ -->
+<section class="pri sec" id="pricing">
+  <div class="wrap">
+    <div data-r style="text-align:center">
+      <span class="lbl" style="justify-content:center">Investment</span>
+      <h2 class="ttl" style="text-align:center">Transparent Pricing for<br><span class="a">Healthcare Professionals</span></h2>
+      <p class="sub" style="margin:0 auto;text-align:center">Every package is an investment in sustainable patient growth.</p>
+    </div>
+    <div class="pg">
+      <div class="prc" data-r data-d="1">
+        <div class="pt">Starter Growth</div><div class="pd">Best for new clinics building foundations</div>
+        <div class="pa">₹35K–50K</div><div class="pp">per month</div>
+        <div class="po">🎯 Build strong digital visibility</div>
+        <ul class="pf"><li>Professional Medical Website</li><li>Google Business Profile Setup</li><li>Basic On-Page SEO</li><li>Social Media (3 posts/week)</li><li>Monthly Performance Report</li><li>Dedicated Account Manager</li></ul>
+        <a href="#audit" class="btnp bp-ol">Get Started →</a>
+      </div>
+      <div class="prc pop" data-r data-d="2">
+        <div class="pbdg">Most Popular</div>
+        <div class="pt">Practice Growth</div><div class="pd">For established clinics ready to scale</div>
+        <div class="pa">₹75K–1L</div><div class="pp">per month</div>
+        <div class="po">🎯 Consistent patient inquiries</div>
+        <ul class="pf"><li>Advanced Technical SEO</li><li>Google Maps Domination</li><li>Conversion Website Redesign</li><li>Reputation Management</li><li>Social Media Authority</li><li>Bi-weekly Strategy Calls</li><li>Competitor Analysis & Reports</li></ul>
+        <a href="#audit" class="btnp bp-fl">Book Strategy Call →</a>
+      </div>
+      <div class="prc" data-r data-d="3">
+        <div class="pt">Patient Acquisition</div><div class="pd">Total domination in your specialty & city</div>
+        <div class="pa">₹1.5L+</div><div class="pp">per month</div>
+        <div class="po">🎯 Dominate your city's specialty</div>
+        <ul class="pf"><li>Complete Acquisition System</li><li>Advanced SEO + Keyword Domination</li><li>Meta Ads Lead Generation</li><li>Conversion Funnel Optimization</li><li>Video Content Production</li><li>Analytics Dashboard + Weekly Reports</li><li>Dedicated Growth Strategist</li></ul>
+        <a href="#audit" class="btnp bp-ol">Get Started →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ VISION / MISSION ══════════ -->
+<section class="vm sec">
+  <div class="wrap">
+    <div data-r style="text-align:center">
+      <span class="lbl" style="justify-content:center">Who We Are</span>
+      <h2 class="ttl" style="text-align:center">Our Vision & <span class="a">Mission</span></h2>
+    </div>
+    <div class="vmg">
+      <div class="vmc vn" data-r data-d="1"><span class="vml">Our Vision</span><h3>Every Doctor, Digitally Powerful</h3><p>A world where every healthcare professional — from solo practitioner to multi-specialty hospital — is easily discoverable by the patients who need them most.</p></div>
+      <div class="vmc vg" data-r data-d="2"><span class="vml">Our Mission</span><h3>Helping Doctors Grow Sustainably</h3><p>Equipping every doctor with the digital tools, strategy, and execution to:</p><ul class="vml2"><li>Attract a consistent stream of high-intent patients</li><li>Build an unshakeable trustworthy online identity</li><li>Grow their practice sustainably — month after month</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ AUDIT ══════════ -->
+<section class="aud sec" id="audit">
+  <div class="wrap">
+    <div class="audi">
+      <div data-r>
+        <span class="lbl" style="color:var(--gl);justify-content:center">Free Audit</span>
+        <h2 class="ttl" style="color:#fff;text-align:center">Discover How Many<br><span class="a">Patients You're Losing</span></h2>
+        <p class="sub" style="color:rgba(255,255,255,.6);text-align:center;margin:0 auto">In your free Clinic Growth Audit, you'll learn:</p>
+      </div>
+      <div class="aps" data-r data-d="2">
+        <div class="ap"><div class="api">🔍</div><div class="apb"><h4>Why Patients Can't Find Your Clinic</h4><p>Every gap in your online presence — the exact reasons you're invisible when patients search.</p></div></div>
+        <div class="ap"><div class="api">📊</div><div class="apb"><h4>How Many Patients You're Losing Monthly</h4><p>A concrete number based on real search volume data for your specialty in your city.</p></div></div>
+        <div class="ap"><div class="api">🚀</div><div class="apb"><h4>The Exact Improvements You Need</h4><p>A prioritized action plan showing what to fix first for the fastest patient growth impact.</p></div></div>
+      </div>
+      <div data-r data-d="3" style="text-align:center">
+        <a href="mailto:hello@helixir.in" class="btng" style="font-size:15px;padding:17px 38px">📞 Book My Free Strategy Call</a>
+        <p style="color:rgba(255,255,255,.36);font-size:12.5px;margin-top:14px">No commitment. No sales pressure. Just clarity on your growth potential.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FAQ ══════════ -->
+<section class="faq sec" id="faq">
+  <div class="wrap">
+    <div data-r style="text-align:center">
+      <span class="lbl" style="justify-content:center">FAQ</span>
+      <h2 class="ttl" style="text-align:center">Questions Doctors <span class="a">Ask Us</span></h2>
+    </div>
+    <div class="fl">
+      <div class="fi"><div class="fq" onclick="faq(this)">How long before I start seeing results?<div class="ft">+</div></div><div class="fa">Most clients see measurable improvements within 60–90 days. SEO results compound over 4–6 months. Meta Ad campaigns typically generate patient leads within 2–3 weeks of launch.</div></div>
+      <div class="fi"><div class="fq" onclick="faq(this)">Do I need to be tech-savvy to work with Helixir?<div class="ft">+</div></div><div class="fa">Not at all. We handle everything — website, SEO, ads, social media, reporting. Your only job is to be the expert doctor you already are. We explain results in plain language during monthly calls.</div></div>
+      <div class="fi"><div class="fq" onclick="faq(this)">What makes Helixir different from a regular marketing agency?<div class="ft">+</div></div><div class="fa">Helixir works exclusively with healthcare professionals. We understand medical patient psychology, regulatory sensitivities, and the trust-building journey that leads a patient to book an appointment. Generic agencies simply don't have this depth.</div></div>
+      <div class="fi"><div class="fq" onclick="faq(this)">Is there a minimum contract period?<div class="ft">+</div></div><div class="fa">We recommend a minimum 3-month engagement to see meaningful results. We work month-to-month after the initial period — no lock-in.</div></div>
+      <div class="fi"><div class="fq" onclick="faq(this)">Can you help clinics in cities outside metro areas?<div class="ft">+</div></div><div class="fa">Absolutely. Smaller cities present enormous opportunities because competition for Google rankings is lower. We've helped Tier 2 and Tier 3 city clinics achieve #1 rankings significantly faster than in metros.</div></div>
+      <div class="fi"><div class="fq" onclick="faq(this)">What does the free Clinic Growth Audit include?<div class="ft">+</div></div><div class="fa">A full analysis of your SEO standing, Google Maps visibility, website conversion rate, social media presence, and competitor benchmarking — completely free, no obligation.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FINAL CTA ══════════ -->
+<section class="fcta">
+  <div class="cb cb1"></div><div class="cb cb2"></div>
+  <div class="fci">
+    <div data-r>
+      <h2>Your Next <span class="a">100 Patients</span><br>Are Searching Right Now.</h2>
+      <p>Will they find your clinic — or your competitor's? Every day you wait is patients lost. Take the first step with a free Clinic Growth Audit.</p>
+      <div class="cbs">
+        <a href="mailto:hello@helixir.in" class="btng" style="font-size:14.5px;padding:16px 32px">🚀 Book Free Consultation</a>
+        <a href="tel:+919876543210" class="btno" style="font-size:14.5px;padding:16px 32px">📞 Call Us Now</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer>
+  <div class="wrap">
+    <div class="fg">
+      <div>
+        <img src="/mnt/user-data/uploads/Group_2147232051.svg" alt="Helixir" class="flogo">
+        <p class="fdesc">Transforming Clinics Into Patient Magnets. India's premier healthcare digital growth partner — built exclusively for doctors.</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul class="fl2"><li><a href="#services">Medical Website Design</a></li><li><a href="#services">Healthcare Branding</a></li><li><a href="#services">SEO for Doctors</a></li><li><a href="#services">Google Maps Ranking</a></li><li><a href="#services">Meta Ads</a></li></ul></div>
+      <div class="fc"><h4>Company</h4><ul class="fl2"><li><a href="#results">Case Studies</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#faq">FAQ</a></li><li><a href="#audit">Free Audit</a></li></ul></div>
+      <div class="fc"><h4>Contact</h4><ul class="fl2"><li><a href="mailto:hello@helixir.in">hello@helixir.in</a></li><li><a href="tel:+919876543210">+91 98765 43210</a></li><li><a href="#">Instagram</a></li><li><a href="#">LinkedIn</a></li></ul></div>
+    </div>
+    <div class="fb">
+      <span>© 2025 Helixir. All rights reserved. Built for healthcare professionals who refuse to be invisible.</span>
+      <span>Made with ❤️ for <a href="#">India's Doctors</a></span>
+    </div>
+  </div>
+</footer>
+
+<!-- ══════════ MODAL FORM ══════════ -->
+<div class="modal-backdrop" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    <div class="modal-badge">🚀 Free Audit</div>
+    <h3>Book Your Free Clinic Growth Audit</h3>
+    <p>Fill in your details and our healthcare growth specialist will reach out within 24 hours.</p>
+
+    <div class="mform" id="mform">
+      <div class="mfield">
+        <label>Full Name <span style="color:#e53e3e">*</span></label>
+        <input type="text" id="f-name" placeholder="Dr. Rajesh Kumar" required>
+      </div>
+      <div class="mfield">
+        <label>Phone Number <span style="color:#e53e3e">*</span></label>
+        <input type="tel" id="f-phone" placeholder="+91 98765 43210" required>
+      </div>
+      <div class="mfield">
+        <label>Email Address <span style="color:#e53e3e">*</span></label>
+        <input type="email" id="f-email" placeholder="doctor@yourclinic.com" required>
+      </div>
+      <div class="mfield">
+        <label>Clinic Name <span style="color:var(--slate);font-weight:400">(Optional)</span></label>
+        <input type="text" id="f-clinic" placeholder="Apollo Dental Clinic">
+      </div>
+      <button class="msubmit" onclick="submitForm()">📞 Book My Free Strategy Call</button>
+      <p class="mfooter">🔒 No spam. No commitment. We'll call you within 24 hours.</p>
+    </div>
+
+    <div class="modal-success" id="msuccess">
+      <div class="success-icon">🎉</div>
+      <h4>You're All Set!</h4>
+      <p>Thank you! Our healthcare growth specialist will call you within <strong>24 hours</strong> to discuss your free Clinic Growth Audit.<br><br>Check your inbox for a confirmation email.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* open / close modal */
+function openModal(){document.getElementById('modal').classList.add('open');document.body.style.overflow='hidden';}
+function closeModalDirect(){document.getElementById('modal').classList.remove('open');document.body.style.overflow='';}
+function closeModal(e){if(e.target===document.getElementById('modal'))closeModalDirect();}
+
+/* wire all CTA buttons */
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('a[href="#audit"]').forEach(a=>{
+    a.addEventListener('click',e=>{e.preventDefault();openModal();});
+  });
+});
+
+/* form submit */
+function submitForm(){
+  const name=document.getElementById('f-name').value.trim();
+  const phone=document.getElementById('f-phone').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  if(!name){alert('Please enter your name.');return;}
+  if(!phone){alert('Please enter your phone number.');return;}
+  if(!email||!email.includes('@')){alert('Please enter a valid email address.');return;}
+  document.getElementById('mform').classList.add('hide');
+  document.getElementById('msuccess').classList.add('show');
+}
+
+/* cursor */
+const cur=document.getElementById('cur'),crng=document.getElementById('crng');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cur.style.left=mx+'px';cur.style.top=my+'px';
+  document.documentElement.style.setProperty('--cx',mx+'px');
+  document.documentElement.style.setProperty('--cy',my+'px');
+});
+(function loop(){rx+=(mx-rx)*.11;ry+=(my-ry)*.11;crng.style.left=rx+'px';crng.style.top=ry+'px';requestAnimationFrame(loop);})();
+document.querySelectorAll('a,button,[onclick],.sc,.spc,.rc,.tc2,.prc,.pc,.chk').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.classList.add('h');crng.classList.add('h');});
+  el.addEventListener('mouseleave',()=>{cur.classList.remove('h');crng.classList.remove('h');});
+});
+
+/* navbar */
+const nav=document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('sc',window.scrollY>60));
+
+/* reveal */
+const ro=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');ro.unobserve(e.target);}});
+},{threshold:.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('[data-r]').forEach(el=>ro.observe(el));
+
+/* counters */
+const co=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const el=e.target,t=parseInt(el.dataset.t);let c=0;
+      const tick=()=>{c=Math.min(c+t/55,t);el.textContent=Math.floor(c)+'+';if(c<t)requestAnimationFrame(tick);};
+      tick();co.unobserve(el);
+    }
+  });
+},{threshold:.7});
+document.querySelectorAll('.cnt').forEach(el=>co.observe(el));
+
+/* faq */
+function faq(q){const i=q.parentElement,o=i.classList.contains('op');document.querySelectorAll('.fi').forEach(x=>x.classList.remove('op'));if(!o)i.classList.add('op');}
+
+/* parallax blobs */
+window.addEventListener('scroll',()=>{
+  const sy=window.scrollY;
+  document.querySelectorAll('.hblob').forEach((b,i)=>{b.style.transform=`translateY(${sy*(i===0?.12:-.09)}px)`;});
+});
+
+/* 3d tilt */
+document.querySelectorAll('.rc,.sc,.tc2,.prc,.pc').forEach(c=>{
+  c.addEventListener('mousemove',e=>{
+    const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+    c.style.transform=`perspective(900px) rotateY(${x*8}deg) rotateX(${-y*8}deg) translateY(-5px)`;
+  });
+  c.addEventListener('mouseleave',()=>{c.style.transform='';});
+});
+
+/* canvas particles */
+(function(){
+  const cv=document.getElementById('pc');if(!cv)return;
+  const ctx=cv.getContext('2d');let W,H,pts=[];
+  function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  class P{
+    constructor(){this.reset();}
+    reset(){this.x=Math.random()*W;this.y=Math.random()*H;this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;this.r=Math.random()*1.5+.3;this.a=Math.random()*.4+.1;this.gold=Math.random()>.7;}
+    update(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>W)this.vx*=-1;if(this.y<0||this.y>H)this.vy*=-1;}
+    draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=this.gold?`rgba(217,135,21,${this.a})`:`rgba(255,255,255,${this.a})`;ctx.fill();}
+  }
+  for(let i=0;i<80;i++)pts.push(new P());
+  function connect(){
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<120){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(255,255,255,${.06*(1-d/120)})`;ctx.lineWidth=.5;ctx.stroke();}
+    }
+  }
+  function frame(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.update();p.draw();});connect();requestAnimationFrame(frame);}
+  frame();
+})();
+</script>
+</body>
+</html>
